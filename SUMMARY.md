@@ -19,4 +19,6 @@
 * [第四章 Tools](content/tools/README.md)
     * [4.1 git](content/tools/git/git.md)
     * [4.2 gitbook](content/tools/git/gitbook.md)
+* [第五章 SQL](content/sql/README.md)
+    * [4.1 redis](content/sql/redis/redis.md)
 
