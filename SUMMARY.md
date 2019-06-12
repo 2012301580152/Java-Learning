@@ -2,8 +2,9 @@
 
 * [Introduction](README.md)
 * [第一章 Spring](content/spring/README.md)
-    * [1.1 Spring Framework 时代](content/spring/1_1_Spring_Framework时代.md)
-    * [1.2 Spring Boot 简介](content/spring/1_2_Spring_Boot简介.md)
+    * [1.1 Spring In Action](content/spring/1_0_Spring_In_Action.md)
+    * [1.2 Spring Framework 时代](content/spring/1_1_Spring_Framework时代.md)
+    * [1.3 Spring Boot 简介](content/spring/1_2_Spring_Boot简介.md)
 * [第二章 JSR 学习](content/jsr/README.md)
     * [2.1 MVC 1.0](content/jsr/2_1_Model-View-Controller_Specification.md)
     * [2.2 JavaServer Faces 2.2(344)](content/jsr/2_2_JavaServer_Faces_2.2.md)
