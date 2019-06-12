@@ -21,5 +21,7 @@
     * [4.1 git](content/tools/git/git.md)
     * [4.2 gitbook](content/tools/git/gitbook.md)
 * [第五章 SQL](content/sql/README.md)
-    * [4.1 redis](content/sql/redis/redis.md)
+    * [5.1 redis](content/sql/redis/redis.md)
+* [第六章 Record](content/record/README.md)
+    * [6.1 redis](content/record/record.md)
 

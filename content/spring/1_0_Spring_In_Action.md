@@ -708,7 +708,146 @@ art
 
 ## 8 Sending messages asynchronously
 
-### Sending messages with JMS
+### 8.1 Sending messages with JMS
+
+Before you can use JMS, you must add a JMS client to your project’s build. With Spring Boot, that couldn’t be any easier. All you need to do is add a starter dependency to the build. First, though, you must decide whether you’re going to use Apache ActiveMQ, or the newer Apache ActiveMQ Artemis broker.
+If you’re using ActiveMQ, you’ll need to add the following dependency to your project’s pom.xml file:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-activemq</artifactId>
+</dependency>
+```
+
+If ActiveMQ Artemis is the choice, the starter dependency should look like this:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-artemis</artifactId>
+</dependency>
+```
+
+Table 8.1 Properties for configuring the location and credentials of an Artemis broker
+
+| Property | Description |
+| -------- | ----------- |
+|spring.artemis.host| The broker’s host|
+|spring.artemis.port| The broker’s port|
+|spring.artemis.user| The user to use to access the broker (optional)|
+|spring.artemis.password| The password to use to access the broker (optional)|
+
+For example, consider the following entry from an application.yml file that might be
+used in a non-development setting:
+
+```yaml
+spring:
+	artemis:
+        host: artemis.tacocloud.com
+        port: 61617
+        user: tacoweb
+        password: l3tm31n
+```
+
+If you were to use ActiveMQ instead of Artemis, you’d need to use the ActiveMQ-specific properties listed in table 8.2.
+Table 8.2 Properties for configuring the location and credentials of an ActiveMQ broker
+
+| Property | Description |
+| -------- | ----------- |
+|spring.activemq.broker-url| The URL of the broker|
+|spring.activemq.user| The user to use to access the broker (optional)|
+|spring.activemq.password| The password to use to access the broker (optional)|
+|spring.activemq.in-memory| Whether or not to start an in-memory broker (default: true)|
+Notice that instead of offering separate properties for the broker’s hostname and port, an ActiveMQ broker’s address is specified with a single property, spring.activemq.broker-url . The URL should be a tcp:// URL, as shown in the following YAML snippet:
+
+```yaml
+spring:
+    activemq:
+        broker-url: tcp://activemq.tacocloud.com
+        user: tacoweb
+        password: l3tm31n
+```
+
+Whether you choose Artemis or ActiveMQ, you shouldn’t need to configure these properties for development when the broker is running locally. 
+
+If you’re using ActiveMQ, you will, however, need to set the spring.activemq.in-memory property to false to prevent Spring from starting an in-memory broker.An in-memory broker may seem useful, but it’s only helpful when you’ll be consuming messages from the same application that publishes them (which has limited usefulness).
+Instead of using an embedded broker, you’ll want to install and start an Artemis(or ActiveMQ) broker before moving on. Rather than repeat the installation instructions here, I refer you to the broker documentation for details:
+* Artemis—https://activemq.apache.org/artemis/docs/latest/using-server.html
+* ActiveMQ—http://activemq.apache.org/getting-started.html#GettingStarted-Pre-InstallationRequirements
+
+With the JMS starter in your build and a broker waiting to ferry messages from one application to another, you’re ready to start sending messages.
+
+#### Sending messages with JmsTemplate
+
+JmsTemplate is the centerpiece of Spring’s JMS integration support. Much like Spring’s other template-oriented components, JmsTemplate eliminates a lot of boiler-plate code that would otherwise be required to work with JMS. Without JmsTemplate ,you’d need to write code to create a connection and session with the message broker, and more code to deal with any exceptions that might be thrown in the course of sending a message. JmsTemplate focuses on what you really want to do: send a message.
+JmsTemplate has several methods that are useful for sending messages, including the following:
+
+```java
+// Send raw messages
+void send(MessageCreator messageCreator) throws JmsException;
+void send(Destination destination, MessageCreator messageCreator) throws JmsException;
+void send(String destinationName, MessageCreator messageCreator) throws JmsException;
+// Send messages converted from objects
+void convertAndSend(Object message) throws JmsException;
+void convertAndSend(Destination destination, Object message) throws JmsException;
+void convertAndSend(String destinationName, Object message) throws JmsException;
+// Send messages converted from objects with post-processing
+void convertAndSend(Object message, MessagePostProcessor postProcessor) throws JmsException;
+void convertAndSend(Destination destination, Object message, MessagePostProcessor postProcessor) throws JmsException;
+void convertAndSend(String destinationName, Object message, MessagePostProcessor postProcessor) throws JmsException;
+```
+
+As you can see, there are really only two methods, send() and convertAndSend() ,each overridden to support different parameters. And if you look closer, you’ll notice that the various forms of convertAndSend() can be broken into two subcategories. In trying to understand what all of these methods do, consider the following breakdown:
+* Three send() methods require a MessageCreator to manufacture a Message object.
+* Three convertAndSend() methods accept an Object and automatically convert that Object into a Message behind the scenes.
+* Three convertAndSend() methods automatically convert an Object to a Message , but also accept a MessagePostProcessor to allow for customization of the Message before it’s sent.
+
+Moreover, each of these three method categories is composed of three overriding methods that are distinguished by how the JMS destination (queue or topic) is specified:
+* One method accepts no destination parameter and sends the message to a default destination.
+* One method accepts a Destination object that specifies the destination for the message.
+* One method accepts a String that specifies the destination for the message by name.
+
+```java
+private JmsTemplate jms;
+
+@Autowired
+public JmsOrderMessagingService(JmsTemplate jms) {
+    this.jms = jms;
+}
+
+@Override
+public void sendOrder(Order order) {
+    jms.send(new MessageCreator() {
+        @Override
+        public Message createMessage(Session session) throws JMSException {
+            return session.createObjectMessage(order);
+        }
+    });
+}
+```
+
+
+
+
+
+```java
+@Override
+public void sendOrder(Order order) {
+    jms.send(session -> session.createObjectMessage(order));
+}
+```
+
+### 8.2 Working with RabbitMQ and AMQP
+
+### 8.3 Messaging with Kafka
+
+### 8.4 Summary
+* Asynchronous messaging provides a layer of indirection between communicating applications, which allows for looser coupling and greater scalability.
+* Spring supports asynchronous messaging with JMS, RabbitMQ, or Apache Kafka.
+* Applications can use template-based clients ( JmsTemplate , RabbitTemplate , or KafkaTemplate ) to send messages via a message broker.
+* Receiving applications can consume messages in a pull-based model using the same template-based clients.
+* Messages can also be pushed to consumers by applying message listener annotations ( @JmsListener , @RabbitListener , or @KafkaListener ) to bean methods.
 
 ## 9 Integrating Spring
 
